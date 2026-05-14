@@ -48,7 +48,10 @@ abstract class BaseController extends Controller
 
         // Open database connections in the controller/library methods that need them.
         // This keeps simple page renders from paying for an unused connection.
-        (new WebAnalytics())->recordRequest($request);
+        $segments = $request->getUri()->getSegments();
+        if (($segments[0] ?? '') !== 'install') {
+            (new WebAnalytics())->recordRequest($request);
+        }
 
         // Preload any models, libraries, etc, here.
         // $this->session = service('session');

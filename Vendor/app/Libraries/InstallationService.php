@@ -1136,9 +1136,13 @@ final class InstallationService
             return [];
         }
 
+        $driver = (string) ($db->DBDriver ?? '');
+
         return array_values(array_filter(
             $this->listAllPhysicalTables($db),
-            static fn (string $table): bool => str_starts_with($table, $prefix),
+            static fn (string $table): bool => $driver === 'Postgre'
+                ? str_starts_with(strtolower($table), strtolower($prefix))
+                : str_starts_with($table, $prefix),
         ));
     }
 
@@ -1275,9 +1279,11 @@ final class InstallationService
             }
 
             if ($driver === 'SQLite3') {
+                $db->query('PRAGMA foreign_keys = OFF');
                 foreach ($tables as $t) {
                     $db->query('DROP TABLE IF EXISTS "' . str_replace('"', '""', $t) . '"');
                 }
+                $db->query('PRAGMA foreign_keys = ON');
 
                 return null;
             }

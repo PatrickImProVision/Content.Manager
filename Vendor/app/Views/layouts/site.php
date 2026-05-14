@@ -251,9 +251,11 @@
 <?php
 helper('form');
 
+$requestSegments = service('request')->getUri()->getSegments();
+$isInstallRoute = ($requestSegments[0] ?? '') === 'install';
 $installed = \App\Libraries\InstallationState::isInstalled();
 $webName = 'Change Name';
-if ($installed) {
+if ($installed && ! $isInstallRoute) {
     try {
         $webName = (new \App\Libraries\WebSettings())->homeSettings()['web_name'];
     } catch (\Throwable) {
@@ -271,14 +273,16 @@ if ($memberLoggedIn && session()->get('member_can_manage_roles') === null) {
 }
 $publicContentNavItems = [];
 $publicContentEnabled = true;
-if ($installed) {
+if ($isInstallRoute) {
+    $publicContentEnabled = false;
+} elseif ($installed) {
     try {
         $publicContentEnabled = (new \App\Libraries\ModuleSettings())->isEnabled(\App\Libraries\ModuleSettings::CONTENT_PUBLIC);
     } catch (\Throwable) {
         $publicContentEnabled = true;
     }
 }
-if ($installed && $publicContentEnabled) {
+if ($installed && ! $isInstallRoute && $publicContentEnabled) {
     try {
         $db = \App\Libraries\AppDatabase::connection();
         if ($db->tableExists('public_contents')) {
